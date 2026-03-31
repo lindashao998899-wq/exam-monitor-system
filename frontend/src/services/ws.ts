@@ -1,5 +1,6 @@
 export const createProctorSocket = (onMessage: (data: any) => void) => {
-  const ws = new WebSocket("ws://localhost:8000/ws/proctor");
+  const protocol = window.location.protocol === "https:" ? "wss" : "ws";
+  const ws = new WebSocket(`${protocol}://${window.location.host}/ws/proctor`);
   ws.onmessage = (event) => onMessage(JSON.parse(event.data));
   return ws;
 };
