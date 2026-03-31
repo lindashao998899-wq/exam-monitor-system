@@ -1,8 +1,13 @@
+import argparse
 import asyncio
+import json
 from datetime import datetime
+from pathlib import Path
 from typing import Any
 
 import httpx
+
+DEFAULT_CONFIG_PATH = Path(__file__).with_name("agent_config.json")
 
 
 class StudentAgent:
@@ -65,6 +70,26 @@ class StudentAgent:
             await asyncio.sleep(5)
 
 
+def load_config(path: Path) -> dict[str, Any]:
+    if not path.exists():
+        return {}
+    with path.open("r", encoding="utf-8") as f:
+        return json.load(f)
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="学生端监控 Agent")
+    parser.add_argument("--config", default=str(DEFAULT_CONFIG_PATH), help="配置文件路径")
+    parser.add_argument("--api-base", help="后端 API 地址，例如 http://10.10.0.10:8000/api")
+    parser.add_argument("--session-id", type=int, help="考试会话 ID")
+    return parser.parse_args()
+
+
 if __name__ == "__main__":
-    agent = StudentAgent(api_base="http://localhost:8000/api", session_id=1)
+    args = parse_args()
+    config = load_config(Path(args.config))
+    api_base = args.api_base or config.get("api_base") or "http://localhost:8000/api"
+    session_id = args.session_id or int(config.get("session_id", 1))
+
+    agent = StudentAgent(api_base=api_base, session_id=session_id)
     asyncio.run(agent.run())
